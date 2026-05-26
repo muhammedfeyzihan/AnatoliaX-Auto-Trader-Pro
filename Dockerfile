@@ -2,7 +2,7 @@
 # Dockerfile — AnatoliaX Trading System v2.0
 # Node.js + Python ortami
 # ============================================================
-FROM node:18-slim AS node_base
+FROM node:26-slim AS node_base
 
 # Python kurulumu
 RUN apt-get update && apt-get install -y --no-install-recommends \
