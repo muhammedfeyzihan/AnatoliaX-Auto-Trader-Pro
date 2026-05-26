@@ -1,0 +1,33 @@
+# ============================================================
+# Dockerfile.telegram — AnatoliaX Telegram Reporter Servisi
+# ============================================================
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Sistem bağımlılıkları
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc \
+    && rm -rf /var/lib/apt/lists/*
+
+# Python bağımlılıkları
+COPY PYTHON/requirements.txt ./
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Kaynak kod
+COPY PYTHON/ ./PYTHON/
+COPY data/ ./data/
+COPY CONFIG/ ./CONFIG/
+COPY TELEGRAM/ ./TELEGRAM/
+
+# Environment
+ENV PYTHONUNBUFFERED=1
+ENV AX_TELEGRAM_REPORT_MORNING=true
+ENV AX_TELEGRAM_REPORT_EVENING=true
+
+# Health check
+HEALTHCHECK --interval=60s --timeout=30s --start-period=30s --retries=3 \
+    CMD python3 -c "from PYTHON.telegram.reporter import TelegramReporter; print('OK')" || exit 1
+
+# Telegram reporter
+CMD ["python3", "PYTHON/telegram/reporter.py"]

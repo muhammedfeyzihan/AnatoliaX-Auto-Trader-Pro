@@ -1,0 +1,72 @@
+# AnatoliaX Trading System - Git Ignore
+# Hassas bilgileri koru
+
+# Credentials
+.env
+*.env
+
+# Telegram token ve chat ID
+# (config.json dosyalari eger token iceriyorsa)
+
+# Log dosyalari
+*.log
+logs/
+
+# Node modules
+node_modules/
+
+# Temp dosyalar
+*.tmp
+*.temp
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+*.bak
+*.orig
+
+# Trading data (buyuk dosyalar)
+*.csv
+*.xlsx
+*.parquet
+
+# Session files
+*.jsonl
+*.trajectory.json
+sessions/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Test coverage
+htmlcov/
+.pytest_cache/
+.coverage
+.coverage.*
+coverage.xml
+*.cover
+
+# Database / cache / runtime data
+*.db
+*.sqlite
+*.sqlite3
+data/cache/
+checkpoints/
+memory/
+chroma_db/
+
+# Claude / AI
+.claude/
+
+# Git
+!.gitignore

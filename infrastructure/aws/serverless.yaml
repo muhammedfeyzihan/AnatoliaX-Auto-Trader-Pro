@@ -1,0 +1,223 @@
+# ============================================================
+# AWS Serverless — AnatoliaX Cloud-Native (AWS Quant pattern)
+# Lambda + API Gateway + DynamoDB + EventBridge + S3 + CloudWatch
+# ============================================================
+AWSTemplateFormatVersion: "2010-09-09"
+Description: AnatoliaX Serverless Stack
+
+Parameters:
+  Environment:
+    Type: String
+    Default: production
+  TelegramToken:
+    Type: String
+    NoEcho: true
+  KimiApiKey:
+    Type: String
+    NoEcho: true
+
+Resources:
+  # DynamoDB — Audit Log (immutable, append-only)
+  AuditLogTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub "anatoliax-audit-${Environment}"
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+        - AttributeName: timestamp
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+        - AttributeName: timestamp
+          KeyType: RANGE
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+      SSESpecification:
+        SSEEnabled: true
+
+  # DynamoDB — Signal Cache
+  SignalCacheTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub "anatoliax-signals-${Environment}"
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: symbol
+          AttributeType: S
+        - AttributeName: timestamp
+          AttributeType: S
+      KeySchema:
+        - AttributeName: symbol
+          KeyType: HASH
+        - AttributeName: timestamp
+          KeyType: RANGE
+      TimeToLiveSpecification:
+        AttributeName: ttl
+        Enabled: true
+
+  # S3 — Reports & Backups
+  DataBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub "anatoliax-data-${Environment}-${AWS::AccountId}"
+      VersioningConfiguration:
+        Status: Enabled
+      LifecycleConfiguration:
+        Rules:
+          - Id: archive-old-reports
+            Status: Enabled
+            Transitions:
+              - StorageClass: GLACIER
+                TransitionInDays: 90
+
+  # Lambda — Signal Engine (container image)
+  SignalEngineFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub "anatoliax-signal-engine-${Environment}"
+      PackageType: Image
+      Code:
+        ImageUri: !Sub "${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/anatoliax/signal-engine:latest"
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Timeout: 300
+      MemorySize: 2048
+      Environment:
+        Variables:
+          AX_PAPER_TRADING: "true"
+          AX_KIMI_API_KEY: !Ref KimiApiKey
+          AUDIT_TABLE: !Ref AuditLogTable
+          SIGNAL_TABLE: !Ref SignalCacheTable
+          S3_BUCKET: !Ref DataBucket
+
+  # Lambda — Telegram Webhook
+  TelegramWebhookFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub "anatoliax-telegram-${Environment}"
+      Runtime: python3.12
+      Handler: webhook.handler
+      Code: ../lambda/telegram_webhook.zip
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Timeout: 30
+      Environment:
+        Variables:
+          AX_TELEGRAM_TOKEN: !Ref TelegramToken
+          SIGNAL_TABLE: !Ref SignalCacheTable
+
+  # API Gateway — REST API
+  ApiGateway:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      Name: !Sub "anatoliax-api-${Environment}"
+      EndpointConfiguration:
+        Types:
+          - REGIONAL
+
+  # EventBridge — Scheduled Rules (cron)
+  MorningSchedule:
+    Type: AWS::Events::Rule
+    Properties:
+      Name: !Sub "anatoliax-morning-${Environment}"
+      ScheduleExpression: "cron(30 5 ? * MON-FRI *)"
+      Targets:
+        - Id: SignalEngine
+          Arn: !GetAtt SignalEngineFunction.Arn
+
+  EveningSchedule:
+    Type: AWS::Events::Rule
+    Properties:
+      Name: !Sub "anatoliax-evening-${Environment}"
+      ScheduleExpression: "cron(30 14 ? * MON-FRI *)"
+      Targets:
+        - Id: SignalEngine
+          Arn: !GetAtt SignalEngineFunction.Arn
+
+  # IAM Role for Lambda
+  LambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "anatoliax-lambda-role-${Environment}"
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: AnatoliaXAccess
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - dynamodb:PutItem
+                  - dynamodb:GetItem
+                  - dynamodb:Query
+                Resource:
+                  - !GetAtt AuditLogTable.Arn
+                  - !GetAtt SignalCacheTable.Arn
+              - Effect: Allow
+                Action:
+                  - s3:PutObject
+                  - s3:GetObject
+                Resource:
+                  - !Sub "${DataBucket.Arn}/*"
+
+  # CloudWatch Dashboard
+  Dashboard:
+    Type: AWS::CloudWatch::Dashboard
+    Properties:
+      DashboardName: !Sub "anatoliax-${Environment}"
+      DashboardBody: !Sub |
+        {
+          "widgets": [
+            {
+              "type": "metric",
+              "x": 0,
+              "y": 0,
+              "width": 12,
+              "height": 6,
+              "properties": {
+                "title": "Signal Engine Invocations",
+                "metrics": [
+                  ["AWS/Lambda", "Invocations", "FunctionName", "anatoliax-signal-engine-${Environment}"]
+                ],
+                "period": 300,
+                "stat": "Sum",
+                "region": "${AWS::Region}"
+              }
+            },
+            {
+              "type": "metric",
+              "x": 12,
+              "y": 0,
+              "width": 12,
+              "height": 6,
+              "properties": {
+                "title": "Lambda Errors",
+                "metrics": [
+                  ["AWS/Lambda", "Errors", "FunctionName", "anatoliax-signal-engine-${Environment}"]
+                ],
+                "period": 300,
+                "stat": "Sum",
+                "region": "${AWS::Region}"
+              }
+            }
+          ]
+        }
+
+Outputs:
+  ApiGatewayUrl:
+    Value: !Sub "https://${ApiGateway}.execute-api.${AWS::Region}.amazonaws.com/${Environment}"
+  AuditLogTable:
+    Value: !Ref AuditLogTable
+  SignalCacheTable:
+    Value: !Ref SignalCacheTable
+  DataBucket:
+    Value: !Ref DataBucket

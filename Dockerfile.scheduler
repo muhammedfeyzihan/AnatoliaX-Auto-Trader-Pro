@@ -1,0 +1,34 @@
+# ============================================================
+# Dockerfile.scheduler — AnatoliaX Scheduler (Cron Jobs)
+# ============================================================
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Sistem bağımlılıkları
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc \
+    && rm -rf /var/lib/apt/lists/*
+
+# Python bağımlılıkları
+COPY PYTHON/requirements.txt ./
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Kaynak kod
+COPY PYTHON/ ./PYTHON/
+COPY data/ ./data/
+COPY CONFIG/ ./CONFIG/
+
+# Environment
+ENV PYTHONUNBUFFERED=1
+ENV AX_TELEGRAM_REPORT_MORNING=true
+ENV AX_TELEGRAM_REPORT_OPENING=true
+ENV AX_TELEGRAM_REPORT_MIDDAY=true
+ENV AX_TELEGRAM_REPORT_EVENING=true
+
+# Health check
+HEALTHCHECK --interval=60s --timeout=30s --start-period=30s --retries=3 \
+    CMD python3 -c "from PYTHON.scheduler.cron import Scheduler; print('OK')" || exit 1
+
+# Scheduler - günlük raporlar
+CMD ["python3", "-c", "from PYTHON.telegram.reporter import TelegramReporter; import time; r=TelegramReporter(); r.send_morning_report(); time.sleep(3600*6); r.send_opening_report(); time.sleep(3600*5); r.send_midday_report(); time.sleep(3600*4); r.send_evening_report()"]

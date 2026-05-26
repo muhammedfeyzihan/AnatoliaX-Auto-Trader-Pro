@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AnatoliaX Dashboard v3.0</title>
+<style>
+:root { --bg:#0b0e14; --panel:#111827; --accent:#00e5ff; --text:#e5e7eb; --muted:#9ca3af; --red:#ef4444; --green:#22c55e; }
+* { box-sizing:border-box; margin:0; padding:0; }
+body { background:var(--bg); color:var(--text); font-family:Segoe UI,Roboto,sans-serif; padding:20px; }
+header { display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; }
+h1 { font-size:1.5rem; color:var(--accent); letter-spacing:1px; }
+#status { font-size:.8rem; padding:4px 10px; border-radius:4px; background:#1f2937; }
+#status.connected { background:var(--green); color:#000; }
+#status.disconnected { background:var(--red); color:#fff; }
+.grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:16px; margin-bottom:20px; }
+.card { background:var(--panel); border:1px solid #1f2937; border-radius:8px; padding:16px; }
+.card h3 { font-size:.8rem; color:var(--muted); margin-bottom:6px; text-transform:uppercase; letter-spacing:.5px; }
+.card .value { font-size:1.6rem; font-weight:700; }
+.card .value.green { color:var(--green); }
+.card .value.red { color:var(--red); }
+table { width:100%; border-collapse:collapse; background:var(--panel); border-radius:8px; overflow:hidden; margin-top:8px; }
+th,td { padding:10px 12px; text-align:left; font-size:.9rem; border-bottom:1px solid #1f2937; }
+th { color:var(--muted); font-weight:600; text-transform:uppercase; font-size:.75rem; letter-spacing:.5px; }
+tr:hover { background:#1f2937; }
+.badge { display:inline-block; padding:2px 8px; border-radius:4px; font-size:.75rem; font-weight:600; }
+.badge-ONAY { background:rgba(34,197,94,.2); color:var(--green); }
+.badge-RED { background:rgba(239,68,68,.2); color:var(--red); }
+.badge-PENDING { background:rgba(156,163,175,.2); color:var(--muted); }
+.section-title { font-size:1.1rem; margin:20px 0 10px; color:var(--accent); }
+footer { margin-top:30px; text-align:center; color:var(--muted); font-size:.75rem; }
+</style>
+</head>
+<body>
+<header>
+  <h1>AnatoliaX Dashboard <span style="font-size:.75rem;color:var(--muted)">v3.0</span></h1>
+  <div id="status" class="disconnected">Bağlantı yok</div>
+</header>
+
+<div class="grid">
+  <div class="card">
+    <h3>SerMeye</h3>
+    <div class="value" id="capital">--</div>
+  </div>
+  <div class="card">
+    <h3>Toplam P&L</h3>
+    <div class="value" id="pnl">--</div>
+  </div>
+  <div class="card">
+    <h3>Getiri %</h3>
+    <div class="value" id="return_pct">--</div>
+  </div>
+  <div class="card">
+    <h3>Aktif Bağlantı</h3>
+    <div class="value" id="conn">0</div>
+  </div>
+</div>
+
+<div class="section-title">Son Sinyaller</div>
+<table>
+  <thead>
+    <tr><th>Zaman</th><th>Sembol</th><th>Skor</th><th>Rejim</th><th>Sonuç</th></tr>
+  </thead>
+  <tbody id="signals-body">
+    <tr><td colspan="5" style="text-align:center;color:var(--muted)">Veri bekleniyor...</td></tr>
+  </tbody>
+</table>
+
+<footer>AnatoliaX Trading System — Canlı dashboard | WebSocket: /ws/dashboard</footer>
+
+<script>
+const WS_URL = (location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host + '/ws/dashboard';
+let ws, reconnectTimer;
+
+function fmtNum(n) {
+  if (typeof n !== 'number') return n;
+  return n.toLocaleString('tr-TR', {minimumFractionDigits:2, maximumFractionDigits:2});
+}
+
+function setStatus(connected) {
+  const el = document.getElementById('status');
+  el.className = connected ? 'connected' : 'disconnected';
+  el.textContent = connected ? 'Bağlı' : 'Bağlantı yok';
+}
+
+function render(snapshot) {
+  const pf = snapshot.portfolio || {};
+  document.getElementById('capital').textContent = fmtNum(pf.capital) + ' TL';
+
+  const pnlEl = document.getElementById('pnl');
+  pnlEl.textContent = (pf.pnl >= 0 ? '+' : '') + fmtNum(pf.pnl) + ' TL';
+  pnlEl.className = 'value ' + (pf.pnl >= 0 ? 'green' : 'red');
+
+  const retEl = document.getElementById('return_pct');
+  retEl.textContent = (pf.return_pct >= 0 ? '+' : '') + fmtNum(pf.return_pct) + '%';
+  retEl.className = 'value ' + (pf.return_pct >= 0 ? 'green' : 'red');
+
+  const tbody = document.getElementById('signals-body');
+  const signals = snapshot.signals || [];
+  if (signals.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--muted)">Henüz sinyal yok</td></tr>';
+  } else {
+    tbody.innerHTML = signals.map(s => {
+      const cls = s.outcome === 'ONAY' ? 'badge-ONAY' : s.outcome === 'RED' ? 'badge-RED' : 'badge-PENDING';
+      const time = s.time ? new Date(s.time).toLocaleString('tr-TR') : '-';
+      return `<tr>
+        <td>${time}</td>
+        <td><strong>${s.symbol}</strong></td>
+        <td>${s.score != null ? s.score.toFixed(1) : '-'}</td>
+        <td>${s.regime || '-'}</td>
+        <td><span class="badge ${cls}">${s.outcome || 'PENDING'}</span></td>
+      </tr>`;
+    }).join('');
+  }
+}
+
+function connect() {
+  if (ws) { try { ws.close(); } catch(e){} }
+  ws = new WebSocket(WS_URL);
+
+  ws.onopen = () => { setStatus(true); };
+
+  ws.onmessage = (ev) => {
+    try {
+      const data = JSON.parse(ev.data);
+      if (data.type === 'snapshot') render(data);
+    } catch (e) {}
+  };
+
+  ws.onclose = () => { setStatus(false); reconnectTimer = setTimeout(connect, 3000); };
+  ws.onerror = () => { setStatus(false); };
+}
+
+connect();
+</script>
+</body>
+</html>

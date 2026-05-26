@@ -1,0 +1,30 @@
+# CONFIG/acceleration.yaml — Acceleration modulu yapilandirmasi
+acceleration:
+  cuda:
+    device_id: 0
+    streams:
+      normal: {}
+      high: { non_blocking: true }
+      critical: { non_blocking: true }
+    memory_pools:
+      "1GB": {}
+      "4GB": {}
+      "16GB": {}
+  rapids:
+    fallback_to_cpu: true
+  onnx:
+    model_path: "models/regime_classifier.onnx"
+    providers:
+      - "TensorrtExecutionProvider"
+      - "CUDAExecutionProvider"
+      - "CPUExecutionProvider"
+  fpga:
+    enabled: false
+    device_index: 0
+    xclbin_path: "bitstreams/top_level.xclbin"
+  cpp_shim:
+    enabled: true
+    build_on_import: true
+  benchmark:
+    iterations: 100
+    min_speedup: 3.0

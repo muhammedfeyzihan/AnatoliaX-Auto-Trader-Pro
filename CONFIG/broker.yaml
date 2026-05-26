@@ -1,0 +1,39 @@
+# CONFIG/broker.yaml — Broker modulu yapilandirmasi
+broker:
+  default: "mock"
+  adapters:
+    matriks:
+      endpoint: "wss://matriks.com/ws"
+      username: ""
+      password: ""
+      api_key: ""
+    gedik:
+      base_url: "https://api.gedik.com"
+      api_key: ""
+      api_secret: ""
+    isyatirim:
+      endpoint: "wss://isyatirim.com/ws"
+      username: ""
+      password: ""
+      api_key: ""
+  fix:
+    version: "FIX.4.4"
+    sender_comp_id: "ANATOLIAX"
+    target_comp_id: "BROKER"
+    heartbeat_sec: 30
+  pre_trade_risk:
+    max_position_pct: 0.02
+    max_daily_loss_pct: 0.03
+    max_single_order_qty: 100000
+  circuit_breaker:
+    groups:
+      A: { up_limit: 0.10, down_limit: -0.10, duration_min: 30 }
+      B: { up_limit: 0.06, down_limit: -0.06, duration_min: 30 }
+      C: { up_limit: 0.04, down_limit: -0.04, duration_min: 30 }
+  vbts:
+    fetch_daily: true
+    bracket_allowed: []
+  viop:
+    span_scenarios: [0.03, 0.06, 0.09]
+  tax_report:
+    currency: "TRY"

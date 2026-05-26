@@ -1,0 +1,3 @@
+"""
+Acceleration benchmarks package.
+"""

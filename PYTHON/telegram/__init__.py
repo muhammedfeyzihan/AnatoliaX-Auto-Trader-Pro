@@ -1,0 +1,1 @@
+"""AnatoliaX telegram package."""

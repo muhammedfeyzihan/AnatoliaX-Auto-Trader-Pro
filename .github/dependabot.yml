@@ -1,0 +1,71 @@
+# ============================================================
+# .github/dependabot.yml — Dependency Updates
+# ============================================================
+
+version: 2
+updates:
+  # Python dependencies
+  - package-ecosystem: "pip"
+    directory: "/PYTHON"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Europe/Istanbul"
+    open-pull-requests-limit: 10
+    labels:
+      - dependencies
+      - python
+    commit-message:
+      prefix: "pip"
+      include: "scope"
+    reviewers:
+      - "anatoliax-team"
+
+  # Node.js dependencies
+  - package-ecosystem: "npm"
+    directory: "/SCRIPTS"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Europe/Istanbul"
+    open-pull-requests-limit: 10
+    labels:
+      - dependencies
+      - javascript
+    commit-message:
+      prefix: "npm"
+      include: "scope"
+    reviewers:
+      - "anatoliax-team"
+
+  # GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Europe/Istanbul"
+    open-pull-requests-limit: 5
+    labels:
+      - ci/cd
+      - github-actions
+    commit-message:
+      prefix: "ci"
+      include: "scope"
+
+  # Docker
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Europe/Istanbul"
+    labels:
+      - docker
+    commit-message:
+      prefix: "docker"
+      include: "scope"

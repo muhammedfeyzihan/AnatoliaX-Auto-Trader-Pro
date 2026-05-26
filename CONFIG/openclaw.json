@@ -1,0 +1,79 @@
+{
+  "agent": {
+    "model": "ollama/qwen2.5:14b",
+    "dmPolicy": "allow_all"
+  },
+  "agents": {
+    "defaults": {
+      "sandbox": {
+        "mode": "non-main"
+      }
+    },
+    "anatoliax": {
+      "name": "AnatoliaX Trading Agent",
+      "description": "BIST 100 AI trading council with 3 agents + Telegram",
+      "skills": [
+        "signal_scan",
+        "risk_check",
+        "portfolio_monitor",
+        "hft_backtest"
+      ],
+      "channels": ["telegram", "cli"],
+      "routing": {
+        "signal": "signal_scan",
+        "risk": "risk_check",
+        "portfoy": "portfolio_monitor",
+        "hft": "hft_backtest"
+      }
+    }
+  },
+  "skills": {
+    "signal_scan": {
+      "description": "Scan BIST universe for trading signals",
+      "handler": "PYTHON.paper_trading.signal_engine:SignalEngine.run_scan",
+      "parameters": {
+        "symbols": {
+          "type": "list",
+          "default": "THYAO,GARAN,ASELS"
+        },
+        "paper_trading": {
+          "type": "bool",
+          "default": "false"
+        }
+      }
+    },
+    "risk_check": {
+      "description": "Run risk gates on a proposed trade",
+      "handler": "PYTHON.hermes_adapter.risk_gates:RiskGateEngine.check_all",
+      "parameters": {
+        "symbol": {
+          "type": "str"
+        },
+        "size": {
+          "type": "float"
+        },
+        "price": {
+          "type": "float"
+        }
+      }
+    },
+    "portfolio_monitor": {
+      "description": "Get current portfolio summary",
+      "handler": "PYTHON.risk.portfolio_monitor:PortfolioMonitor.get_portfolio_summary",
+      "parameters": {}
+    },
+    "hft_backtest": {
+      "description": "Run HFT tick-level backtest",
+      "handler": "PYTHON.hft.backtest.hft_backtest:HFTBacktestEngine.run",
+      "parameters": {
+        "csv_path": {
+          "type": "str"
+        },
+        "strategy": {
+          "type": "str",
+          "default": "m1_momentum"
+        }
+      }
+    }
+  }
+}

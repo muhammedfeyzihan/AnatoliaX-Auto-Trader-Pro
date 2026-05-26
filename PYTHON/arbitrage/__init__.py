@@ -1,0 +1,3 @@
+"""
+Arbitrage strategies package.
+"""

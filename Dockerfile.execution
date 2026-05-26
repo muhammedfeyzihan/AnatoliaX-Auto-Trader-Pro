@@ -1,0 +1,32 @@
+# ============================================================
+# Dockerfile.execution — AnatoliaX Execution Engine (Live Trading)
+# ============================================================
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Sistem bağımlılıkları
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc \
+    && rm -rf /var/lib/apt/lists/*
+
+# Python bağımlılıkları
+COPY PYTHON/requirements.txt ./
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Kaynak kod
+COPY PYTHON/ ./PYTHON/
+COPY data/ ./data/
+COPY CONFIG/ ./CONFIG/
+
+# Environment
+ENV PYTHONUNBUFFERED=1
+ENV AX_EXECUTION_MODE=live
+ENV AX_MAX_LATENCY_MS=500
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=30s --start-period=60s --retries=3 \
+    CMD python3 -c "from PYTHON.execution.engine import UnifiedExecutionEngine; print('OK')" || exit 1
+
+# Execution engine
+CMD ["python3", "PYTHON/execution/engine.py"]

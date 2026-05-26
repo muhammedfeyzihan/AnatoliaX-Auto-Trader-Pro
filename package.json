@@ -1,0 +1,24 @@
+{
+  "name": "anatoliax-trading-system",
+  "version": "2.0.0",
+  "description": "AnatoliaX BIST 100 Profesyonel AI Trading Council",
+  "main": "SCRIPTS/main.js",
+  "scripts": {
+    "start": "node SCRIPTS/main.js",
+    "test": "jest",
+    "backtest": "python3 PYTHON/main.py --backtest",
+    "monitor": "python3 PYTHON/main.py --monitor",
+    "health": "node SCRIPTS/main.js --health"
+  },
+  "dependencies": {
+    "@microsoft/signalr": "^10.0.0",
+    "node-fetch": "^3.3.2",
+    "ws": "^8.14.2"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

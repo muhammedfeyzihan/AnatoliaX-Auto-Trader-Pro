@@ -1,0 +1,35 @@
+# ============================================================
+# .github/release.yml — Release Configuration
+# ============================================================
+
+changelog:
+  exclude:
+    labels:
+      - ignore-for-release
+    authors:
+      - dependabot
+  categories:
+    - title: 🚀 Yeni Özellikler
+      labels:
+        - enhancement
+        - feature
+    - title: 🐛 Bug Fixes
+      labels:
+        - bug
+        - fix
+    - title: ⚡ Performans İyileştirmeleri
+      labels:
+        - performance
+        - optimization
+    - title: 📚 Dokümantasyon
+      labels:
+        - documentation
+    - title: 🔒 Güvenlik
+      labels:
+        - security
+    - title: 🧪 Testler
+      labels:
+        - tests
+    - title: 🔨 Diğer Değişiklikler
+      labels:
+        - "*"

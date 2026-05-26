@@ -1,0 +1,206 @@
+# ============================================================
+# docker-compose.yml — AnatoliaX Tüm Servisleri
+# ============================================================
+version: "3.9"
+
+services:
+  anatoliax-node:
+    build: .
+    container_name: anatoliax-node
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+      - "8080:8080"
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/anatoliax
+      - CHROMA_PATH=/app/chroma_db
+      - SQLITE_PATH=/app/data/anatoliax.db
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+      - ./reports:/app/reports
+      - ./chroma_db:/app/chroma_db
+    depends_on:
+      - postgres
+      - chromadb
+      - redis
+    networks:
+      - anatoliax-net
+
+  anatoliax-python:
+    build: .
+    container_name: anatoliax-python
+    restart: unless-stopped
+    command: python3 PYTHON/main.py
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/anatoliax
+      - CHROMA_PATH=/app/chroma_db
+      - SQLITE_PATH=/app/data/anatoliax.db
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+      - ./chroma_db:/app/chroma_db
+    depends_on:
+      - postgres
+      - chromadb
+    networks:
+      - anatoliax-net
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: anatoliax-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: anatoliax
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - anatoliax-net
+
+  chromadb:
+    image: chromadb/chroma:latest
+    container_name: anatoliax-chroma
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    volumes:
+      - chroma_data:/chroma/chroma
+    networks:
+      - anatoliax-net
+
+  redis:
+    image: redis:7-alpine
+    container_name: anatoliax-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    networks:
+      - anatoliax-net
+
+  anatoliax-paper:
+    build: .
+    container_name: anatoliax-paper
+    restart: unless-stopped
+    command: python3 -c "from PYTHON.paper_trading.signal_engine import SignalEngine; engine = SignalEngine(); engine.run_scan(['THYAO','GARAN','ASELS','BIMAS','KCHOL'])"
+    environment:
+      - AX_PAPER_TRADING=true
+      - AX_PAPER_INITIAL_CAPITAL=100000
+      - AX_DATA_PRIMARY=yahoo
+      - AX_DATA_SECONDARY=investing
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/anatoliax
+      - SQLITE_PATH=/app/data/anatoliax.db
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - anatoliax-net
+
+  anatoliax-telegram:
+    build: .
+    container_name: anatoliax-telegram
+    restart: unless-stopped
+    command: python3 PYTHON/telegram/reporter.py
+    environment:
+      - AX_TELEGRAM_TOKEN=${TELEGRAM_BOT_TOKEN}
+      - AX_TELEGRAM_CHAT_ID=${TELEGRAM_CHAT_ID}
+      - AX_TELEGRAM_REPORT_MORNING=true
+      - AX_TELEGRAM_REPORT_EVENING=true
+      - AX_PAPER_TRADING=true
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/anatoliax
+      - SQLITE_PATH=/app/data/anatoliax.db
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - anatoliax-net
+
+  # Execution Engine — canli emir yonetimi (7/24)
+  anatoliax-execution:
+    build: .
+    container_name: anatoliax-execution
+    restart: unless-stopped
+    command: python3 PYTHON/execution/engine.py
+    environment:
+      - AX_EXECUTION_MODE=live
+      - AX_MAX_LATENCY_MS=500
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/anatoliax
+      - SQLITE_PATH=/app/data/anatoliax.db
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - anatoliax-net
+
+  # Prometheus — metrik toplama
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: anatoliax-prometheus
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./infrastructure/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    networks:
+      - anatoliax-net
+
+  # Grafana — dashboard
+  grafana:
+    image: grafana/grafana:latest
+    container_name: anatoliax-grafana
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-admin}
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./infrastructure/grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
+    depends_on:
+      - prometheus
+    networks:
+      - anatoliax-net
+
+  # Scheduler — gunluk raporlar, cron gorevleri
+  anatoliax-scheduler:
+    build: .
+    container_name: anatoliax-scheduler
+    restart: unless-stopped
+    command: python3 -c "from PYTHON.telegram.reporter import TelegramReporter; import time; r=TelegramReporter(); r.send_morning_report(); time.sleep(3600*6); r.send_opening_report(); time.sleep(3600*5); r.send_midday_report(); time.sleep(3600*4); r.send_evening_report()"
+    environment:
+      - AX_TELEGRAM_TOKEN=${TELEGRAM_BOT_TOKEN}
+      - AX_TELEGRAM_CHAT_ID=${TELEGRAM_CHAT_ID}
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/anatoliax
+      - SQLITE_PATH=/app/data/anatoliax.db
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - anatoliax-net
+
+volumes:
+  postgres_data:
+  chroma_data:
+  prometheus_data:
+  grafana_data:
+
+networks:
+  anatoliax-net:
+    driver: bridge

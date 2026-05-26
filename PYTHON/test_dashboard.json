@@ -1,0 +1,107 @@
+{
+  "dashboard": {
+    "title": "AnatoliaX Dashboard",
+    "uid": "anatoliax-v1",
+    "panels": [
+      {
+        "id": 1,
+        "title": "P50/P95/P99 Latency",
+        "type": "timeseries",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.50, rate(latency_seconds_bucket[5m]))",
+            "legendFormat": "P50"
+          },
+          {
+            "expr": "histogram_quantile(0.95, rate(latency_seconds_bucket[5m]))",
+            "legendFormat": "P95"
+          },
+          {
+            "expr": "histogram_quantile(0.99, rate(latency_seconds_bucket[5m]))",
+            "legendFormat": "P99"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 0
+        }
+      },
+      {
+        "id": 2,
+        "title": "Daily PnL",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "daily_pnl",
+            "legendFormat": "PnL"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 0
+        }
+      },
+      {
+        "id": 3,
+        "title": "Active Positions",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "active_positions",
+            "legendFormat": "Positions"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 8
+        }
+      },
+      {
+        "id": 4,
+        "title": "Kill Switch Status",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "kill_switch_status",
+            "legendFormat": "Status"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 8
+        }
+      },
+      {
+        "id": 5,
+        "title": "Win Rate",
+        "type": "gauge",
+        "targets": [
+          {
+            "expr": "win_rate",
+            "legendFormat": "Win Rate"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 16
+        }
+      }
+    ],
+    "tags": [
+      "anatoliax",
+      "trading"
+    ],
+    "timezone": "Europe/Istanbul"
+  },
+  "overwrite": true
+}

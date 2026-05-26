@@ -1,0 +1,327 @@
+# ============================================================
+# deployment.yaml — AnatoliaX Kubernetes Deployments
+# Tüm servisler: core, paper, telegram, execution, scheduler
+# ============================================================
+---
+# Core Deployment (Node.js + Python)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: anatoliax-core
+  namespace: anatoliax
+  labels:
+    app.kubernetes.io/name: anatoliax
+    app.kubernetes.io/component: core
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: anatoliax
+      app.kubernetes.io/component: core
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: anatoliax
+        app.kubernetes.io/component: core
+    spec:
+      restartPolicy: Always
+      containers:
+        - name: anatoliax-core
+          image: anatoliax/anatoliax:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 3001
+              protocol: TCP
+            - name: ws
+              containerPort: 8080
+              protocol: TCP
+            - name: dashboard
+              containerPort: 8081
+              protocol: TCP
+          envFrom:
+            - configMapRef:
+                name: anatoliax-config
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: anatoliax-secrets
+                  key: DATABASE_URL
+            - name: AX_TELEGRAM_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: anatoliax-secrets
+                  key: AX_TELEGRAM_TOKEN
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "500m"
+            limits:
+              memory: "2Gi"
+              cpu: "2000m"
+          volumeMounts:
+            - name: data
+              mountPath: /app/data
+            - name: logs
+              mountPath: /app/logs
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 3001
+            initialDelaySeconds: 30
+            periodSeconds: 60
+            timeoutSeconds: 10
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 3001
+            initialDelaySeconds: 10
+            periodSeconds: 15
+            timeoutSeconds: 5
+            failureThreshold: 2
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: anatoliax-data
+        - name: logs
+          emptyDir: {}
+---
+# Paper Trading Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: anatoliax-paper
+  namespace: anatoliax
+  labels:
+    app.kubernetes.io/name: anatoliax
+    app.kubernetes.io/component: paper-trading
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: anatoliax
+      app.kubernetes.io/component: paper-trading
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: anatoliax
+        app.kubernetes.io/component: paper-trading
+    spec:
+      restartPolicy: Always
+      containers:
+        - name: anatoliax-paper
+          image: anatoliax/anatoliax:latest
+          imagePullPolicy: IfNotPresent
+          command: ["python3", "-c"]
+          args:
+            - "from PYTHON.paper_trading.signal_engine import SignalEngine; engine = SignalEngine(); engine.run_scan(['THYAO','GARAN','ASELS','BIMAS','KCHOL'])"
+          envFrom:
+            - configMapRef:
+                name: anatoliax-config
+          env:
+            - name: AX_PAPER_TRADING
+              value: "true"
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: anatoliax-secrets
+                  key: DATABASE_URL
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "1Gi"
+              cpu: "1000m"
+          volumeMounts:
+            - name: data
+              mountPath: /app/data
+            - name: logs
+              mountPath: /app/logs
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: anatoliax-data
+        - name: logs
+          emptyDir: {}
+---
+# Telegram Reporter Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: anatoliax-telegram
+  namespace: anatoliax
+  labels:
+    app.kubernetes.io/name: anatoliax
+    app.kubernetes.io/component: telegram
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: anatoliax
+      app.kubernetes.io/component: telegram
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: anatoliax
+        app.kubernetes.io/component: telegram
+    spec:
+      restartPolicy: Always
+      containers:
+        - name: anatoliax-telegram
+          image: anatoliax/anatoliax:latest
+          imagePullPolicy: IfNotPresent
+          command: ["python3", "PYTHON/telegram/reporter.py"]
+          envFrom:
+            - configMapRef:
+                name: anatoliax-config
+          env:
+            - name: AX_TELEGRAM_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: anatoliax-secrets
+                  key: AX_TELEGRAM_TOKEN
+            - name: AX_TELEGRAM_CHAT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: anatoliax-secrets
+                  key: AX_TELEGRAM_CHAT_ID
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          volumeMounts:
+            - name: data
+              mountPath: /app/data
+            - name: logs
+              mountPath: /app/logs
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: anatoliax-data
+        - name: logs
+          emptyDir: {}
+---
+# Execution Engine Deployment (Live Trading)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: anatoliax-execution
+  namespace: anatoliax
+  labels:
+    app.kubernetes.io/name: anatoliax
+    app.kubernetes.io/component: execution
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: anatoliax
+      app.kubernetes.io/component: execution
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: anatoliax
+        app.kubernetes.io/component: execution
+    spec:
+      restartPolicy: Always
+      containers:
+        - name: anatoliax-execution
+          image: anatoliax/anatoliax:latest
+          imagePullPolicy: IfNotPresent
+          command: ["python3", "PYTHON/execution/engine.py"]
+          envFrom:
+            - configMapRef:
+                name: anatoliax-config
+          env:
+            - name: AX_EXECUTION_MODE
+              value: "live"
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: anatoliax-secrets
+                  key: DATABASE_URL
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "500m"
+            limits:
+              memory: "2Gi"
+              cpu: "2000m"
+          volumeMounts:
+            - name: data
+              mountPath: /app/data
+            - name: logs
+              mountPath: /app/logs
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: anatoliax-data
+        - name: logs
+          emptyDir: {}
+---
+# Scheduler Deployment (Cron Jobs)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: anatoliax-scheduler
+  namespace: anatoliax
+  labels:
+    app.kubernetes.io/name: anatoliax
+    app.kubernetes.io/component: scheduler
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: anatoliax
+      app.kubernetes.io/component: scheduler
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: anatoliax
+        app.kubernetes.io/component: scheduler
+    spec:
+      restartPolicy: Always
+      containers:
+        - name: anatoliax-scheduler
+          image: anatoliax/anatoliax:latest
+          imagePullPolicy: IfNotPresent
+          command: ["python3", "-c"]
+          args:
+            - "from PYTHON.telegram.reporter import TelegramReporter; import time; r=TelegramReporter(); r.send_morning_report(); time.sleep(3600*6); r.send_opening_report(); time.sleep(3600*5); r.send_midday_report(); time.sleep(3600*4); r.send_evening_report()"
+          envFrom:
+            - configMapRef:
+                name: anatoliax-config
+          env:
+            - name: AX_TELEGRAM_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: anatoliax-secrets
+                  key: AX_TELEGRAM_TOKEN
+            - name: AX_TELEGRAM_CHAT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: anatoliax-secrets
+                  key: AX_TELEGRAM_CHAT_ID
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          volumeMounts:
+            - name: data
+              mountPath: /app/data
+            - name: logs
+              mountPath: /app/logs
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: anatoliax-data
+        - name: logs
+          emptyDir: {}

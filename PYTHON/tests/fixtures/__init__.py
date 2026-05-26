@@ -1,0 +1,1 @@
+"""AnatoliaX test fixtures package."""

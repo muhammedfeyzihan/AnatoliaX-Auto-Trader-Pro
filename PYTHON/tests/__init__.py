@@ -1,0 +1,1 @@
+"""AnatoliaX tests package."""

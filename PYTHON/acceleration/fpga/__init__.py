@@ -1,0 +1,3 @@
+"""
+FPGA acceleration package.
+"""

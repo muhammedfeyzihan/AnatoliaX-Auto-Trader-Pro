@@ -1,0 +1,33 @@
+# .agents/config/gates.yaml — Kalite kapisi esikleri
+thresholds:
+  syntax:
+    enabled: true
+    fail_on_error: true
+
+  mypy:
+    enabled: true
+    fail_on_error: true
+
+  lint:
+    enabled: true
+    fail_on_error: true
+    max_line_length: 120
+
+  test:
+    enabled: true
+    fail_on_error: true
+    min_coverage_percent: 70
+
+  security:
+    enabled: true
+    fail_on_error: true
+    max_severity: "LOW"
+
+  review:
+    enabled: true
+    fail_on_error: false
+    min_score: 7
+
+notification:
+  telegram_chat_id: ""
+  email_recipients: []

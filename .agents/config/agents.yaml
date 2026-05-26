@@ -1,0 +1,35 @@
+# .agents/config/agents.yaml — Ajan yetkinlik matrisi yapilandirmasi
+agents:
+  Claude:
+    strengths:
+      - code_generation
+      - architecture_design
+      - debugging
+      - documentation
+    weaknesses:
+      - long_context_research
+    models:
+      - claude-opus-4-7
+      - claude-sonnet-4-6
+    latency_ms: 500
+
+  Kimi:
+    strengths:
+      - code_review
+      - research
+      - test_generation
+      - long_context_summarization
+    weaknesses:
+      - complex_architecture_design
+    models:
+      - kimi-k2.6
+    latency_ms: 800
+
+capability_weights:
+  code_generation: 0.9
+  code_review: 0.95
+  architecture_design: 0.85
+  debugging: 0.80
+  documentation: 0.75
+  research: 0.90
+  test_generation: 0.85

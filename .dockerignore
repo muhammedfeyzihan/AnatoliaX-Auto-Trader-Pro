@@ -1,0 +1,15 @@
+node_modules
+npm-debug.log
+.git
+.gitignore
+.env
+*.md
+!README.md
+logs
+reports
+chroma_db
+__pycache__
+*.pyc
+.pytest_cache
+.vscode
+.idea

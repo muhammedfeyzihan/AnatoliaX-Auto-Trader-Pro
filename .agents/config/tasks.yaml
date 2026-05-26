@@ -1,0 +1,31 @@
+# .agents/config/tasks.yaml — Ajan gorev tanimlari
+tasks:
+  - id: sinyal_taramasi
+    title: "Gunluk sinyal taramasi"
+    agent: sinyal
+    schedule: "0 9 * * 1-5"
+    priority: 1
+
+  - id: risk_kontrolu
+    title: "Gunluk risk kontrolu"
+    agent: risk
+    schedule: "0 9 * * 1-5"
+    priority: 1
+
+  - id: strateji_karari
+    title: "Strateji nihai karar"
+    agent: strateji
+    schedule: "0 10 * * 1-5"
+    priority: 2
+
+  - id: kod_inceleme
+    title: "Otomatik kod inceleme"
+    agent: claude
+    schedule: "0 */6 * * *"
+    priority: 3
+
+  - id: benchmark
+    title: "GPU/CPU benchmark"
+    agent: acceleration
+    schedule: "0 0 * * 0"
+    priority: 4

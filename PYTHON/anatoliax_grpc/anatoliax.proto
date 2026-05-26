@@ -1,0 +1,74 @@
+syntax = "proto3";
+
+package anatoliax;
+
+// ===================
+// Signal Service
+// ===================
+message SignalRequest {
+  string symbol = 1;
+}
+
+message SignalResponse {
+  string symbol = 1;
+  double score = 2;
+  double entry = 3;
+  double sl = 4;
+  double tp1 = 5;
+  double tp2 = 6;
+  double r_r = 7;
+  double kelly = 8;
+  string regime = 9;
+  bool valid = 10;
+  string reason = 11;
+}
+
+service SignalService {
+  rpc GetSignal (SignalRequest) returns (SignalResponse);
+}
+
+// ===================
+// Risk Service
+// ===================
+message RiskRequest {
+  repeated Position positions = 1;
+  double daily_pnl = 2;
+}
+
+message Position {
+  string symbol = 1;
+  double size = 2;
+  double entry_price = 3;
+  double current_price = 4;
+}
+
+message RiskResponse {
+  bool allowed = 1;
+  string reason = 2;
+  double max_drawdown_pct = 3;
+  double daily_pnl = 4;
+  string regime = 5;
+}
+
+service RiskService {
+  rpc CheckRisk (RiskRequest) returns (RiskResponse);
+}
+
+// ===================
+// Report Service
+// ===================
+message ReportRequest {
+  string report_type = 1;  // morning, opening, midday, evening, custom
+}
+
+message ReportResponse {
+  string report_type = 1;
+  string content = 2;
+  string timestamp = 3;
+  bool success = 4;
+  string error = 5;
+}
+
+service ReportService {
+  rpc GenerateReport (ReportRequest) returns (ReportResponse);
+}
