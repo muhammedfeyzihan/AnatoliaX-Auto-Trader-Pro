@@ -39,3 +39,5 @@ msgpack>=1.0.0
 # rapids>=24.0.0  # Requires NVIDIA GPU, CUDA 11+
 # onnxruntime-gpu>=1.17.0  # Use onnxruntime for CPU, onnxruntime-gpu for GPU
 
+
+pytest-asyncio>=0.23.0
