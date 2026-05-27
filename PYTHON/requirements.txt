@@ -19,8 +19,7 @@ grafana-api>=1.0.0
 
 # v3.5 Enhancement Dependencies
 z3-solver>=4.12.0
-onnxruntime-gpu>=1.17.0
-rapids>=24.0.0
+onnxruntime>=1.17.0
 ray>=2.9.0
 polars>=0.20.0
 pybind11>=2.11.0
@@ -35,3 +34,8 @@ redis>=5.0.0
 python-rapidjson>=1.14
 orjson>=3.9.0
 msgpack>=1.0.0
+
+# Optional GPU dependencies (install manually if needed)
+# rapids>=24.0.0  # Requires NVIDIA GPU, CUDA 11+
+# onnxruntime-gpu>=1.17.0  # Use onnxruntime for CPU, onnxruntime-gpu for GPU
+

@@ -30,7 +30,7 @@ jobs:
       - name: Run pytest + coverage
         run: |
           cd PYTHON
-          pytest tests/ -v --tb=short --cov=. --cov-report=xml || true
+          pytest tests/ -v --tb=short --cov=. --cov-report=xml
       - name: Upload coverage
         uses: codecov/codecov-action@v4
         with:
@@ -39,27 +39,26 @@ jobs:
 
   lint:
     runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
     steps:
       - uses: actions/checkout@v4
       - name: Python lint (ruff)
         run: |
           pip install ruff
-          ruff check PYTHON/ --select E,W,F || true
-      - name: Node lint
-        run: |
-          npm ci || true
-          npm run lint || true
+          ruff check PYTHON/ --select E,W,F
 
-  secret-scan:
+  security-scan:
     runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: trufflesecurity/trufflehog@main
         with:
           path: ./
-          base: main
-          head: HEAD
-          extra_args: --debug --only-verified
+          base: ${{ github.event.pull_request.base.sha }}
+          head: ${{ github.event.pull_request.head.sha }}
 
   docker-build:
     runs-on: ubuntu-latest
@@ -67,13 +66,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Build Docker images
-        run: docker-compose build || true
-      - name: Test Docker compose
-        run: |
-          docker-compose up -d || true
-          sleep 10
-          docker-compose ps || true
-          docker-compose down || true
+        run: docker-compose build
 
   deploy-staging:
     runs-on: ubuntu-latest
@@ -84,5 +77,4 @@ jobs:
       - name: Deploy to staging
         run: |
           echo "Staging deployment would run here"
-          # ssh / kubectl apply etc.
 
