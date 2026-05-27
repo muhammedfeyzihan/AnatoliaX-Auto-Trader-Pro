@@ -367,7 +367,7 @@ Distributed under the MIT License. See `LICENSE` for more information.
 
 ## ⚠️ Disclaimer
 
-Bu yazılım eğitim ve araştırma amaçlıdır. Canlı trading kullanımı kendi sorumluluğunuzdadır. Geçmiş performans gelecekteki sonuçların garantisi değildir.
+Canlı trading kullanımı kendi sorumluluğunuzdadır. Geçmiş performans gelecekteki sonuçların garantisi değildir.
 
 ---
 
