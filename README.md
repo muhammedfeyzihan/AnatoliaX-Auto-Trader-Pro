@@ -359,7 +359,7 @@ Distributed under the MIT License. See `LICENSE` for more information.
 
 ## 📞 Contact
 
-**GitHub**: [@muhammedfeyzihan](https://github.com/muhammedfeyzihan)
+**GitHub**: [@muhammedfeyzihan](https://github.com/muhammedfeyzihan) instagram:mhmmdfeyzihan
 
 **Repository**: [AnatoliaX-Auto-Trader-Enterprise](https://github.com/muhammedfeyzihan/AnatoliaX-Auto-Trader-Enterprise)
 
@@ -373,7 +373,6 @@ Bu yazılım eğitim ve araştırma amaçlıdır. Canlı trading kullanımı ken
 
 <div align="center">
 
-**🏆 90-Day Target: Mathematically Complete (0 Days)**
 
 Built with ❤️ for institutional-grade trading
 
