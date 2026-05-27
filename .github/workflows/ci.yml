@@ -33,7 +33,7 @@ jobs:
           export PYTHONPATH="$GITHUB_WORKSPACE/PYTHON:$PYTHONPATH"
           pytest tests/test_critical_components.py tests/test_missing_components.py tests/test_knowledge_base.py tests/test_optimal_profit_strategy.py tests/test_master_orchestrator.py tests/test_enums_and_classes.py tests/test_system_optimizer.py -v --tb=short --cov=. --cov-report=xml
       - name: Upload coverage
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v6
         with:
           files: PYTHON/coverage.xml
           fail_ci_if_error: false
