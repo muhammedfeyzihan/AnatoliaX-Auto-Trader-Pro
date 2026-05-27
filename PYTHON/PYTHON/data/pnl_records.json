@@ -1,0 +1,43 @@
+{
+  "records": [
+    {
+      "timestamp": "2026-05-27T13:17:35.574072+00:00",
+      "symbol": "THYAO",
+      "strategy_id": "test_strategy",
+      "pnl": 1500.0,
+      "pnl_type": "realized",
+      "position_size": 100,
+      "entry_price": 100.0,
+      "current_price": 115.0,
+      "fees": 5.0,
+      "slippage": 2.0,
+      "metadata": {}
+    },
+    {
+      "timestamp": "2026-05-27T13:17:35.775463+00:00",
+      "symbol": "THYAO",
+      "strategy_id": "strat1",
+      "pnl": 1000.0,
+      "pnl_type": "realized",
+      "position_size": 100,
+      "entry_price": 100.0,
+      "current_price": 110.0,
+      "fees": 0.0,
+      "slippage": 0.0,
+      "metadata": {}
+    },
+    {
+      "timestamp": "2026-05-27T13:17:35.776713+00:00",
+      "symbol": "GARAN",
+      "strategy_id": "strat1",
+      "pnl": -500.0,
+      "pnl_type": "realized",
+      "position_size": 100,
+      "entry_price": 50.0,
+      "current_price": 45.0,
+      "fees": 0.0,
+      "slippage": 0.0,
+      "metadata": {}
+    }
+  ]
+}
