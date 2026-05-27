@@ -41,7 +41,7 @@ jobs:
           cd PYTHON
           pytest tests/ -v --tb=short --cov=. --cov-report=xml
       - name: Upload coverage
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v6
         with:
           files: PYTHON/coverage.xml
           fail_ci_if_error: false
