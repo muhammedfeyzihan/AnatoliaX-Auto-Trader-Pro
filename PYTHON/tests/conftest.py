@@ -28,6 +28,13 @@ def pytest_configure(config):
         "markers", "integration: marks tests as integration tests"
     )
 
+# Pytest-asyncio configuration
+@pytest.fixture(scope="session")
+def event_loop_policy():
+    """Use default event loop policy for asyncio tests."""
+    import asyncio
+    return asyncio.DefaultEventLoopPolicy()
+
 @pytest.fixture(scope="session")
 def test_data_dir():
     """Get test data directory."""
@@ -59,4 +66,3 @@ def sample_tick_data():
         {"price": 100.5, "volume": 150, "timestamp": datetime.now(timezone.utc)},
         {"price": 101.0, "volume": 200, "timestamp": datetime.now(timezone.utc)},
     ]
-
