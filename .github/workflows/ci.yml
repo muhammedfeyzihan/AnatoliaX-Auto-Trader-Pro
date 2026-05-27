@@ -52,12 +52,11 @@ jobs:
           cd PYTHON
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-      - name: Run all tests (optional)
+      - name: Run all tests
         run: |
           cd PYTHON
           export PYTHONPATH="$GITHUB_WORKSPACE/PYTHON:$PYTHONPATH"
-          pytest tests/ -v --tb=short || true
-        continue-on-error: true
+          pytest tests/ -v --tb=short
 
   lint:
     runs-on: ubuntu-latest
